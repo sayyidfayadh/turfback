@@ -1,5 +1,7 @@
 const user=require("../models/userSchema")
 const jwt=require("jsonwebtoken");
+const bookings=require("../models/bookingSchema");
+
 //register user
 exports.register=async (req,res)=>{
   const{username,email,password,role}=req.body
@@ -12,9 +14,9 @@ exports.register=async (req,res)=>{
     }
     else{
       console.log("here");
-      const newUser=new user({username,email,password,role,profileImg:"",phone:"",bio:"",created_at:""})
-      await newUser.save()
-      res.status(201).json(newUser)
+      const updateUser=new user({username,email,password,role,profileImg:"",phone:"",bio:"",created_at:""})
+      await updateUser.save()
+      res.status(201).json(updateUser)
     }
   } catch (error) {
     res.status(401).json(error)
@@ -22,7 +24,22 @@ exports.register=async (req,res)=>{
   
  
 }
-
+//update
+exports.updateProfile=async (req,res)=>{
+  const{username,email,bio,phone}=req.body
+  console.log(username,email,bio,phone);
+  try {
+    const updatedUser = await user.findOneAndUpdate(
+      { email }, {   $set: {username: username,bio: bio, phone: phone,},}, { new: true, runValidators: true } 
+    );
+    res.status(200).json(updatedUser)
+  }
+catch (error) {
+    res.status(401).json(error)
+  }
+  
+ 
+}
 //login user
 exports.login=async(req,res)=>{
   // console.log("in login");
@@ -51,7 +68,10 @@ exports.getProfileData=async(req,res)=>{
   
   try {
     const existingProfileData=await user.findOne({_id:userId}).select(`-password`)
-    res.status(200).json(existingProfileData)
+    const userbookings=await bookings.find({user_id:userId})
+    console.log("sss",userbookings);
+    
+    res.status(200).json({profile:existingProfileData,userbookings:userbookings})
     console.log(existingProfileData);
 
     

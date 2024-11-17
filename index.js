@@ -1,4 +1,5 @@
 require("dotenv").config()
+const sendMailRoute = require('./Router/router');
 const express=require("express")
 const cors=require("cors")
 const turfServer=express()
@@ -15,3 +16,8 @@ turfServer.listen(PORT,()=>{
 turfServer.get('/',(req,res)=>{
   res.status(200).send('<h1>turf server runninng</h1>')
 })
+
+
+//nodemail
+
+turfServer.use('/api', sendMailRoute);

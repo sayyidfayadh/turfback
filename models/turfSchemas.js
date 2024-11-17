@@ -13,6 +13,10 @@ const turfSchema = new mongoose.Schema({
   location: {
      type: String, 
      required: true },
+  map:{
+type:String,
+required:true
+  },
   sports: [{
     name: { 
       type: String, 

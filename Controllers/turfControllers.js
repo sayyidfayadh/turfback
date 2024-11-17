@@ -1,13 +1,20 @@
 const turfs=require("../models/turfSchemas")
 const jwt=require("jsonwebtoken")
+const user=require("../models/userSchema")
+const bookings=require("../models/bookingSchema")
 //add turf
 exports.addTurf=async(req,res)=>{
   console.log("in controller");
   
-  const {name,bookingStatus,location}=req.body
+  const {name,bookingStatus,location,map}=req.body
   // console.log("hii",timeslots);
+  const adminId=req.payload
+// console.log(adminId);
+
   let sports,amenities,timeslots;
-  const images=req.files.map((files)=>files.filename)
+  const images = req.files && req.files.length ? req.files.map((file) => file.filename) : [];
+  console.log(images);
+  
   try {
      sports = JSON.parse(req.body.sports);
     //  console.log(sports);
@@ -16,49 +23,87 @@ exports.addTurf=async(req,res)=>{
   } catch (error) {
     return res.status(400).json({ error: "Invalid JSON format for sports or amenities" });
   }
-  // console.log(images);
-  const adminId=req.payload
-
-  // console.log("in catch");
   try {
     const turfAlreadyCreated=await turfs.findOne({adminId})
-    // console.log("in catch");
+   
     if(turfAlreadyCreated){
      //update turf
     try {
-      const editTurf=await turfs.findOneAndUpdate({adminId},{
-        name,bookingStatus,location,sports,amenities,images,timeslots,adminId},{new:true})
- 
-       res.status(200).json(editTurf)
+     
+      const updateData = {
+        name,
+        bookingStatus,
+        location,
+        map,
+        sports,
+        amenities,
+        images: images.length ? [...turfAlreadyCreated.images, ...images] : turfAlreadyCreated.images,
+        timeslots,
+        adminId
+      };
+    
+      const editTurf=await turfs.findOneAndUpdate({adminId},updateData,{new:true})
+     console.log(editTurf);
+     
+      res.status(200).json(editTurf)
     } catch (error) {
-      res.status(401).json(error)
+      res.status(500).json(error)
     }
     }
     else{
-      const newTurf=new turfs({name,bookingStatus,location,sports,amenities,images,timeslots,adminId})
-      await newTurf.save()
-      // console.log("in catch");
-      res.status(201).json(newTurf)
+      const admin=await user.findById({_id:adminId})
+      console.log(admin);   
+    if(admin.role!=='turfadmin' && admin.role !=='admin'){
+      res.status(401).json({message:"not admin"})
+    }
+    const newTurf=new turfs({name,bookingStatus,location,map,sports,amenities,images,timeslots,adminId})
+    await newTurf.save()
+    console.log("in catch");
+    res.status(201).json(newTurf)
+      
     }
   } catch (error) {
-    console.log(error);
-    res.status(500).json(error.message)
+    // console.log("this",error);
+    res.status(500).json({error})
   }
   
-
 }
 //get admin turf
 exports.getTurf=async(req,res)=>{
- 
-  const adminId=req.payload
-  // console.log(adminId);
+  const {pickedDate}=req.body
   
-
+  
+  
+  const date=pickedDate
+  // console.log(pickedDate);
+  
+  
+  const adminId=req.payload
   // console.log("in catch");
+
   try {
     const turfData=await turfs.findOne({adminId})
+    const turfId=turfData._id.toString()
+    // console.log(turfId);
     // console.log("got",JSON.stringify(turfData, null, 2));
-    res.status(200).json(turfData)
+
+    const allbookings=await bookings.find({
+      turfId,
+      date
+    })
+  //  console.log(allbookings);
+   
+    
+    //mapping the slots from every booking collection items here
+    const bookedSlots=allbookings.map((slot)=>slot.timeslots).flat()
+    console.log(bookedSlots);
+
+    //fetching turfs collection here
+    const thisturf=await turfs.findById(turfId)
+    // console.log(turf);
+    //filtering available slots with booked slots
+    const availableSlots=thisturf.timeslots.filter((slot)=>!bookedSlots.includes(slot))
+    res.status(200).json({turfData,availableSlots,bookedSlots})
   
     }
   catch (error) {
