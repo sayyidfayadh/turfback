@@ -2,6 +2,7 @@ const turfs=require("../models/turfSchemas")
 const user=require("../models/userSchema")
 const bookings=require("../models/bookingSchema")
 const jwt=require("jsonwebtoken")
+const mongoose=require("mongoose")
 
 exports.getSlots=async(req,res)=>{
  
