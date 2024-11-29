@@ -37,3 +37,8 @@ router.post('/getallbookings',jwtMiddleware,bookingControllers.getAllBookings)
 //nodemailer
 router.post('/send-mail',nodemail.nodemail)
 module.exports=router
+
+//superadmin calls
+
+//getalladmins
+router.get('/getalladmins',userController.getAllAdmins)

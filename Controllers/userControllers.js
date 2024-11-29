@@ -80,3 +80,17 @@ exports.getProfileData=async(req,res)=>{
     
   }
 }
+
+// getalladmins
+exports.getAllAdmins=async(req,res)=>{
+  const role="turfadmin"
+  try {
+    const allturfadmins=await user.find({role})
+    console.log(allturfadmins);
+    res.status(200).json(allturfadmins)
+    
+  } catch (error) {
+    console.log(error)
+    res.status(500).json(error)
+  }
+}
